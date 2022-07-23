@@ -13,8 +13,12 @@ def run(args):
 
     # Create environments.
     env = make_pytorch_env(args.env_id)
+
+
+    env_online = make_pytorch_env(args.env_id)
     test_env = make_pytorch_env(
         args.env_id, episode_life=False, clip_rewards=False)
+    print("self.env_online 0:", env_online)
 
     # Specify the directory to log.
     name = args.config.split('/')[-1].rstrip('.yaml')
@@ -23,9 +27,20 @@ def run(args):
         'logs', args.env_id, f'{name}-seed{args.seed}-{time}')
 
     # Create the agent and run.
-    agent = IQNAgent(
+
+    print(env)
+    agent_evaluation = IQNAgent(
         env=env, test_env=test_env, log_dir=log_dir, seed=args.seed,
         cuda=args.cuda, **config)
+
+
+    #
+    print("Start policy evaluation...")
+
+    agent = IQNAgent(
+        env=env, test_env=test_env, log_dir=log_dir, seed=args.seed,
+        cuda=args.cuda, agent=agent_evaluation, env_online=env_online, **config)
+
     agent.run()
 
 
@@ -34,7 +49,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--config', type=str, default=os.path.join('config', 'iqn.yaml'))
     parser.add_argument('--env_id', type=str, default='PongNoFrameskip-v4')
-    parser.add_argument('--cuda', action='store_true')
+    parser.add_argument('--cuda', type=bool, default=True)
     parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--agent', type=str, default="result/PongNoFrameskip-v4/iqn-seed0-20211007-0313/model")
     args = parser.parse_args()
     run(args)
